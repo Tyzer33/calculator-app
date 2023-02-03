@@ -1,3 +1,4 @@
--Reorganiser props
--Sauvegarder Github
--Essayer ChatGPT
+- Reorganiser props
+- Sauvegarder Github
+- Essayer ChatGPT
+- Essayer nouveau systeme pour calculer
