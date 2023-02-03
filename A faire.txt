@@ -1,0 +1,3 @@
+-Reorganiser props
+-Sauvegarder Github
+-Essayer ChatGPT
