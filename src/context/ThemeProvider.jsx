@@ -68,6 +68,10 @@ const themes = {
   },
 }
 
+const breakpoints = {
+  tabletLandscape: '(min-width: 900px)',
+}
+
 export const ThemeContext = createContext()
 
 export function Theme({ children }) {
@@ -75,7 +79,7 @@ export function Theme({ children }) {
 
   return (
     // eslint-disable-next-line react/jsx-no-constructed-context-values
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, breakpoints }}>
       <ThemeProvider theme={themes[theme]}>{children}</ThemeProvider>
     </ThemeContext.Provider>
   )

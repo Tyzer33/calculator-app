@@ -1,5 +1,6 @@
 import { useContext } from 'react'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
+import { tabletLandscape } from '../breakpoints'
 import { CalculContext } from '../context/CalculContext'
 
 const Container = styled.div`
@@ -12,6 +13,11 @@ const Container = styled.div`
   background: ${(props) => props.theme.screenBackground};
   color: ${(props) => props.theme.screenText};
   border-radius: 10px;
+
+  ${tabletLandscape(css`
+    height: 8rem;
+    font-size: 3.5rem;
+  `)}
 `
 
 export default function Screen() {

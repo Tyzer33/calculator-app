@@ -1,4 +1,5 @@
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
+import { tabletLandscape } from '../breakpoints'
 import Key from './Key'
 
 const Container = styled.div`
@@ -10,6 +11,12 @@ const Container = styled.div`
   padding: 1.5rem;
   background: ${(props) => props.theme.keypadBackground};
   border-radius: 10px;
+
+  ${tabletLandscape(css`
+    grid: repeat(5, 3.75rem) / repeat(4, 6.3125rem);
+    gap: 1.75rem 1.5rem;
+    padding: 2rem 1.875rem;
+  `)}
 `
 
 const keysList = [

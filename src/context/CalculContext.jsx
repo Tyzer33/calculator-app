@@ -5,44 +5,97 @@ export const CalculContext = createContext()
 
 export function CalculProvider({ children }) {
   const [calcul, updateCalcul] = useState({
-    terms: { 1: 12, 2: undefined },
-    activeTerm: 1,
-    operator: '',
+    termsAndOperators: [],
+    activeTerm: 0,
     result: undefined,
   })
 
-  const { terms, activeTerm, result } = calcul
+  const { termsAndOperators, activeTerm, result } = calcul
+
+  function resetCalcul() {
+    updateCalcul({
+      termsAndOperators: [],
+      activeTerm: 0,
+      result: undefined,
+    })
+  }
 
   function onScreen() {
-    if (result) {
+    if (result !== undefined) {
       return result
     }
-    if (terms[activeTerm]) {
-      return terms[activeTerm]
+    if (termsAndOperators[0] === undefined) {
+      return 0
     }
-    return 0
+    return termsAndOperators.join(' ')
   }
 
   function updateTerm(digit) {
-    // probleme quand rajoute 0 après la vrigule
-    if (digit === '.' && !terms[activeTerm].toString().includes('.')) {
-      updateCalcul({
-        ...calcul,
-        terms: { ...terms, 1: terms[activeTerm] + digit },
-      })
+    const newArr = [...termsAndOperators]
+    if (
+      (digit === 0 && newArr[activeTerm] === 0) ||
+      (digit === '.' && newArr[activeTerm] && newArr[activeTerm].includes('.'))
+    ) {
+      return ''
+    }
+
+    if (newArr[activeTerm] === undefined) {
+      newArr.push(digit)
     } else {
-      const newTerm = terms[activeTerm].toString() + digit
+      newArr[activeTerm] = newArr[activeTerm].toString() + digit.toString()
+    }
+    updateCalcul({ ...calcul, termsAndOperators: newArr })
+  }
+
+  function updateOperator(oper) {
+    const newArr = [...termsAndOperators]
+
+    if (newArr[activeTerm] !== undefined) {
+      newArr[activeTerm] = parseFloat(newArr[activeTerm])
+      newArr.push(oper)
       updateCalcul({
         ...calcul,
-        terms: { ...terms, [activeTerm]: parseFloat(newTerm) },
+        termsAndOperators: newArr,
+        activeTerm: activeTerm + 2,
       })
     }
   }
 
-  function updateOperator(oper) {
-    if (!terms[1]) {
-      updateCalcul({ ...calcul, activeTerm: 1, operator: oper })
+  function findResult() {
+    // Attention si dernier index est un opérateur
+    const currArr = [...termsAndOperators]
+    const newArr = []
+    currArr[currArr.length - 1] = parseFloat(currArr[currArr.length - 1])
+
+    if (typeof currArr[currArr.length - 1] !== 'number') {
+      currArr.pop()
     }
+    while (newArr.length !== 1) {
+      currArr.forEach((value, index, arr) => {
+        if (value === '/') {
+          const calculResult = arr[index - 1] / arr[index + 1]
+          currArr.splice(index - 1, 3, calculResult)
+        }
+        if (value === 'x') {
+          const calculResult = arr[index - 1] * arr[index + 1]
+          currArr.splice(index - 1, 3, calculResult)
+        }
+        console.log('/*', currArr)
+      })
+      currArr.forEach((value, index, arr) => {
+        if (value === '+') {
+          const calculResult = arr[index - 1] + arr[index + 1]
+          currArr.splice(index - 1, 3, calculResult)
+        }
+        if (value === '-') {
+          const calculResult = arr[index - 1] - arr[index + 1]
+          currArr.splice(index - 1, 3, calculResult)
+        }
+        console.log('+-', currArr)
+      })
+    }
+
+    updateCalcul({ ...calcul, result: currArr[0] })
   }
 
   console.log(calcul)
@@ -51,7 +104,15 @@ export function CalculProvider({ children }) {
   return (
     <CalculContext.Provider
       // eslint-disable-next-line react/jsx-no-constructed-context-values
-      value={{ calcul, updateCalcul, updateTerm, updateOperator, onScreen }}
+      value={{
+        calcul,
+        updateCalcul,
+        resetCalcul,
+        updateTerm,
+        updateOperator,
+        findResult,
+        onScreen,
+      }}
     >
       {children}
     </CalculContext.Provider>

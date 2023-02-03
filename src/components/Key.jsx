@@ -2,6 +2,7 @@ import styled, { css } from 'styled-components'
 import PropTypes from 'prop-types'
 import { useContext } from 'react'
 import { CalculContext } from '../context/CalculContext'
+import { tabletLandscape } from '../breakpoints'
 
 const StyledKey = styled.button`
   display: flex;
@@ -14,6 +15,10 @@ const StyledKey = styled.button`
   padding-top: 4px;
   grid-column-end: ${(props) => `span ${props.size}`};
 
+  ${tabletLandscape(css`
+    padding-top: 6px;
+  `)}
+
   ${(props) => {
     switch (props.type) {
       case 'primary':
@@ -22,20 +27,32 @@ const StyledKey = styled.button`
           background: ${props.theme.primaryKeyBackground};
           box-shadow: 0px 4px ${props.theme.primaryKeyShadow};
           color: ${props.theme.primaryKeyText};
+
+          ${tabletLandscape(css`
+            font-size: 2.5rem;
+          `)}
         `
       case 'secondary':
         return css`
-          font-size: 18px;
+          font-size: 1.125rem;
           background: ${props.theme.secondaryKeyBackground};
           box-shadow: 0px 4px ${props.theme.secondaryKeyShadow};
           color: ${props.theme.secondaryKeyText};
+
+          ${tabletLandscape(css`
+            font-size: 1.75rem;
+          `)}
         `
       case 'tertiary':
         return css`
-          font-size: 20px;
+          font-size: 1.25rem;
           background: ${props.theme.tertiaryKeyBackground};
           box-shadow: 0px 4px ${props.theme.tertiaryKeyShadow};
           color: ${props.theme.tertiaryKeyText};
+
+          ${tabletLandscape(css`
+            font-size: 1.625rem;
+          `)}
         `
       default:
         return ''
@@ -44,19 +61,20 @@ const StyledKey = styled.button`
 `
 
 export default function Key({ content, type, size }) {
-  const { calcul, updateCalcul, updateTerm, updateOperator } =
-    useContext(CalculContext)
+  const {
+    calcul,
+    updateCalcul,
+    resetCalcul,
+    updateTerm,
+    updateOperator,
+    findResult,
+  } = useContext(CalculContext)
 
   const { terms, activeTerm } = calcul
 
   function handleClick(keyContent) {
     if (keyContent === 'RESET') {
-      updateCalcul({
-        terms: { 1: undefined, 2: undefined },
-        activeTerm: 1,
-        operator: '',
-        result: undefined,
-      })
+      resetCalcul()
     } else if (keyContent === 'DEL' && terms[activeTerm].length > 0) {
       updateCalcul()
     } else if (typeof keyContent === 'number' || keyContent === '.') {
@@ -69,7 +87,7 @@ export default function Key({ content, type, size }) {
     ) {
       updateOperator(keyContent)
     } else if (keyContent === '=') {
-      updateCalcul(parseFloat(calcul))
+      findResult()
     }
   }
 
