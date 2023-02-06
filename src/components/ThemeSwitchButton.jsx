@@ -35,6 +35,13 @@ const Button = styled.button`
   border-radius: 100px;
   padding: 0 0.3125rem;
 
+  &:hover {
+    &::after {
+      filter: brightness(160%);
+      transition: filter 0.5s ease;
+    }
+  }
+
   &::after {
     content: '';
     position: absolute;

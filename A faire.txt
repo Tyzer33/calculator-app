@@ -1,4 +1,4 @@
-- Reorganiser props
-- Sauvegarder Github
-- Essayer ChatGPT
-- Essayer nouveau systeme pour calculer
+- Quoi faire après un résultat
+- Gerer nombre trop long calcul bug
+- Terminer Détail Visuel
+- Faire operation a plus de deux termes

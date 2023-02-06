@@ -15,6 +15,16 @@ const StyledKey = styled.button`
   padding-top: 4px;
   grid-column-end: ${(props) => `span ${props.size}`};
 
+  &:hover {
+    filter: brightness(140%);
+    transition: filter 0.4s ease;
+  }
+
+  &:active {
+    scale: 0.98;
+    transition: scale 0.1s ease;
+  }
+
   ${tabletLandscape(css`
     padding-top: 6px;
   `)}
@@ -62,32 +72,24 @@ const StyledKey = styled.button`
 
 export default function Key({ content, type, size }) {
   const {
-    calcul,
-    updateCalcul,
-    resetCalcul,
-    updateTerm,
-    updateOperator,
-    findResult,
+    handleReset,
+    handleDel,
+    handleDigitAndPoint,
+    handleOperator,
+    handleEqual,
   } = useContext(CalculContext)
-
-  const { terms, activeTerm } = calcul
 
   function handleClick(keyContent) {
     if (keyContent === 'RESET') {
-      resetCalcul()
-    } else if (keyContent === 'DEL' && terms[activeTerm].length > 0) {
-      updateCalcul()
-    } else if (typeof keyContent === 'number' || keyContent === '.') {
-      updateTerm(keyContent)
-    } else if (
-      keyContent === '+' ||
-      keyContent === '-' ||
-      keyContent === 'x' ||
-      keyContent === '/'
-    ) {
-      updateOperator(keyContent)
+      handleReset()
+    } else if (keyContent === 'DEL') {
+      handleDel()
     } else if (keyContent === '=') {
-      findResult()
+      handleEqual()
+    } else if (typeof keyContent === 'number' || keyContent === '.') {
+      handleDigitAndPoint(keyContent)
+    } else {
+      handleOperator(keyContent)
     }
   }
 

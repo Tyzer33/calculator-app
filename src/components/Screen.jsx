@@ -5,7 +5,6 @@ import { CalculContext } from '../context/CalculContext'
 
 const Container = styled.div`
   display: flex;
-  justify-content: flex-end;
   align-items: center;
   height: 5.625rem;
   padding: 0 1.5rem;
@@ -20,8 +19,27 @@ const Container = styled.div`
   `)}
 `
 
-export default function Screen() {
-  const { onScreen } = useContext(CalculContext)
+const Display = styled.p`
+  width: 100%;
+  text-align: right;
+  overflow: hidden;
+  direction: rtl;
+  text-overflow: ellipsis;
+`
+const Placeholder = styled(Display)`
+  opacity: 0.5;
+`
 
-  return <Container>{onScreen()}</Container>
+export default function Screen() {
+  const { toDisplay } = useContext(CalculContext)
+
+  return (
+    <Container>
+      {toDisplay() === undefined ? (
+        <Placeholder>0</Placeholder>
+      ) : (
+        <Display>{toDisplay()}</Display>
+      )}
+    </Container>
+  )
 }

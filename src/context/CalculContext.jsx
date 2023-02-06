@@ -5,101 +5,129 @@ export const CalculContext = createContext()
 
 export function CalculProvider({ children }) {
   const [calcul, updateCalcul] = useState({
-    termsAndOperators: [],
-    activeTerm: 0,
+    terms: { 1: undefined, 2: undefined },
+    activeTerm: 1,
+    operator: undefined,
     result: undefined,
   })
 
-  const { termsAndOperators, activeTerm, result } = calcul
+  const { terms, activeTerm, operator, result } = calcul
 
-  function resetCalcul() {
+  function toDisplay() {
+    if (result !== undefined) {
+      return result
+    }
+    return terms[activeTerm]
+  }
+
+  function handleReset() {
     updateCalcul({
-      termsAndOperators: [],
-      activeTerm: 0,
+      terms: { 1: undefined, 2: undefined },
+      activeTerm: 1,
+      operator: undefined,
       result: undefined,
     })
   }
 
-  function onScreen() {
-    if (result !== undefined) {
-      return result
-    }
-    if (termsAndOperators[0] === undefined) {
-      return 0
-    }
-    return termsAndOperators.join(' ')
+  function handleDel() {
+    if (terms[activeTerm] === undefined) return
+
+    const newTerm =
+      terms[activeTerm].length > 1
+        ? terms[activeTerm].substring(0, terms[activeTerm].length - 1)
+        : undefined
+
+    updateCalcul({
+      ...calcul,
+      terms: {
+        ...terms,
+        [activeTerm]: newTerm,
+      },
+    })
   }
 
-  function updateTerm(digit) {
-    const newArr = [...termsAndOperators]
+  function handleDigitAndPoint(digit) {
+    if (digit === 0 && terms[activeTerm] === '0') return
+
+    const newTerm =
+      (terms[activeTerm] === '0' && digit !== '.') || !terms[activeTerm]
+        ? digit.toString()
+        : terms[activeTerm].toString() + digit.toString()
     if (
-      (digit === 0 && newArr[activeTerm] === 0) ||
-      (digit === '.' && newArr[activeTerm] && newArr[activeTerm].includes('.'))
+      typeof digit === 'number' ||
+      (digit === '.' && terms[activeTerm] === undefined) ||
+      !terms[activeTerm].includes('.')
     ) {
-      return ''
-    }
-
-    if (newArr[activeTerm] === undefined) {
-      newArr.push(digit)
-    } else {
-      newArr[activeTerm] = newArr[activeTerm].toString() + digit.toString()
-    }
-    updateCalcul({ ...calcul, termsAndOperators: newArr })
-  }
-
-  function updateOperator(oper) {
-    const newArr = [...termsAndOperators]
-
-    if (newArr[activeTerm] !== undefined) {
-      newArr[activeTerm] = parseFloat(newArr[activeTerm])
-      newArr.push(oper)
       updateCalcul({
         ...calcul,
-        termsAndOperators: newArr,
-        activeTerm: activeTerm + 2,
+        terms: {
+          ...terms,
+          [activeTerm]: newTerm,
+        },
       })
     }
   }
 
-  function findResult() {
-    // Attention si dernier index est un opérateur
-    const currArr = [...termsAndOperators]
-    const newArr = []
-    currArr[currArr.length - 1] = parseFloat(currArr[currArr.length - 1])
+  function calculResult(firstTerm, oper, secondTerm = 0) {
+    const parsedFirstTerm = parseFloat(firstTerm)
+    const parsedSecondTerm = parseFloat(secondTerm)
+    let tempResult
 
-    if (typeof currArr[currArr.length - 1] !== 'number') {
-      currArr.pop()
-    }
-    while (newArr.length !== 1) {
-      currArr.forEach((value, index, arr) => {
-        if (value === '/') {
-          const calculResult = arr[index - 1] / arr[index + 1]
-          currArr.splice(index - 1, 3, calculResult)
-        }
-        if (value === 'x') {
-          const calculResult = arr[index - 1] * arr[index + 1]
-          currArr.splice(index - 1, 3, calculResult)
-        }
-        console.log('/*', currArr)
-      })
-      currArr.forEach((value, index, arr) => {
-        if (value === '+') {
-          const calculResult = arr[index - 1] + arr[index + 1]
-          currArr.splice(index - 1, 3, calculResult)
-        }
-        if (value === '-') {
-          const calculResult = arr[index - 1] - arr[index + 1]
-          currArr.splice(index - 1, 3, calculResult)
-        }
-        console.log('+-', currArr)
-      })
+    switch (oper) {
+      case '+':
+        tempResult = parsedFirstTerm + parsedSecondTerm
+        break
+      case '-':
+        tempResult = parsedFirstTerm - parsedSecondTerm
+        break
+      case 'x':
+        tempResult = parsedFirstTerm * parsedSecondTerm
+        break
+      case '/':
+        tempResult = parsedFirstTerm / parsedSecondTerm
+        break
+      default:
+        tempResult = undefined
+        break
     }
 
-    updateCalcul({ ...calcul, result: currArr[0] })
+    return tempResult
+  }
+
+  function handleOperator(oper) {
+    const changeResultToTerm = {
+      terms: { 1: result, 2: undefined },
+      activeTerm: 2,
+      operator: oper,
+      result: undefined,
+    }
+
+    if (terms[1] === undefined) return
+    if (result !== undefined) {
+      updateCalcul(changeResultToTerm)
+    } else if (terms[2] === undefined) {
+      updateCalcul({ ...calcul, activeTerm: 2, operator: oper })
+    } else {
+      updateCalcul({
+        ...changeResultToTerm,
+        terms: {
+          ...changeResultToTerm.terms,
+          1: calculResult(terms[1], operator, terms[2]),
+        },
+      })
+    }
+  }
+
+  function handleEqual() {
+    if (!operator) return
+
+    updateCalcul({
+      ...calcul,
+      result: calculResult(terms[1], operator, terms[2]),
+    })
   }
 
   console.log(calcul)
-  // console.log(eval(`${keysList[0]}${keysList[7]}${keysList[5]}`))
 
   return (
     <CalculContext.Provider
@@ -107,11 +135,12 @@ export function CalculProvider({ children }) {
       value={{
         calcul,
         updateCalcul,
-        resetCalcul,
-        updateTerm,
-        updateOperator,
-        findResult,
-        onScreen,
+        toDisplay,
+        handleReset,
+        handleDel,
+        handleDigitAndPoint,
+        handleOperator,
+        handleEqual,
       }}
     >
       {children}
