@@ -5,10 +5,11 @@ export const CalculContext = createContext()
 
 export function CalculProvider({ children }) {
   const [calcul, updateCalcul] = useState({
-    terms: { 1: undefined, 2: undefined },
-    activeTerm: 1,
-    operator: undefined,
+    terms: [20, 30, 20],
+    activeTerm: 0,
+    operator: ['+', '-'],
     result: undefined,
+    display: '',
   })
 
   const { terms, activeTerm, operator, result } = calcul
@@ -17,7 +18,15 @@ export function CalculProvider({ children }) {
     if (result !== undefined) {
       return result
     }
-    return terms[activeTerm]
+
+    let sentence = ''
+    terms.forEach((elem, index) => {
+      sentence += elem.toString()
+      if (operator[index]) {
+        sentence += ` ${operator[index]} `
+      }
+    })
+    return sentence
   }
 
   function handleReset() {
