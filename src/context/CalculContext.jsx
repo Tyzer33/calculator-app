@@ -1,133 +1,132 @@
 import { createContext, useState } from 'react'
 import PropTypes from 'prop-types'
+import { evaluate } from 'mathjs'
 
 export const CalculContext = createContext()
 
 export function CalculProvider({ children }) {
   const [calcul, updateCalcul] = useState({
-    terms: { 1: undefined, 2: undefined },
-    activeTerm: 1,
-    operator: undefined,
+    expressionArr: [],
+    activeTerm: 0,
     result: undefined,
   })
 
-  const { terms, activeTerm, operator, result } = calcul
+  const { expressionArr, activeTerm, result } = calcul
 
   function toDisplay() {
+    if (expressionArr.length === 0) return undefined
     if (result !== undefined) {
       return result
     }
-    return terms[activeTerm]
+
+    return expressionArr.join(' ')
   }
 
   function handleReset() {
     updateCalcul({
-      terms: { 1: undefined, 2: undefined },
-      activeTerm: 1,
-      operator: undefined,
+      expressionArr: [],
+      activeTerm: 0,
       result: undefined,
     })
   }
 
   function handleDel() {
-    if (terms[activeTerm] === undefined) return
+    if (expressionArr[0] === undefined) return
+    let newExpressionArr = [...expressionArr]
+    let newActiveTerm = activeTerm
 
-    const newTerm =
-      terms[activeTerm].length > 1
-        ? terms[activeTerm].substring(0, terms[activeTerm].length - 1)
-        : undefined
+    if (expressionArr.length <= 1 && expressionArr[0].toString().length <= 1) {
+      newExpressionArr = []
+    } else if (!newExpressionArr[activeTerm]) {
+      if (activeTerm >= 2) newActiveTerm -= 2
+      if (newExpressionArr[activeTerm] === '') newExpressionArr.pop()
+      newExpressionArr.pop()
+    } else {
+      newExpressionArr[activeTerm] = newExpressionArr[activeTerm].toString()
+      newExpressionArr[activeTerm] = newExpressionArr[activeTerm].slice(
+        0,
+        newExpressionArr[activeTerm].length - 1
+      )
+    }
 
     updateCalcul({
       ...calcul,
-      terms: {
-        ...terms,
-        [activeTerm]: newTerm,
-      },
+      expressionArr: newExpressionArr,
+      activeTerm: newActiveTerm,
     })
   }
 
   function handleDigitAndPoint(digit) {
-    if (digit === 0 && terms[activeTerm] === '0') return
+    let newExpressionArr = [...expressionArr]
+    let newResult = result
+    let newActiveTerm = activeTerm
 
-    const newTerm =
-      (terms[activeTerm] === '0' && digit !== '.') || !terms[activeTerm]
-        ? digit.toString()
-        : terms[activeTerm].toString() + digit.toString()
-    if (
-      typeof digit === 'number' ||
-      (digit === '.' && terms[activeTerm] === undefined) ||
-      !terms[activeTerm].includes('.')
-    ) {
-      updateCalcul({
-        ...calcul,
-        terms: {
-          ...terms,
-          [activeTerm]: newTerm,
-        },
-      })
-    }
-  }
-
-  function calculResult(firstTerm, oper, secondTerm = 0) {
-    const parsedFirstTerm = parseFloat(firstTerm)
-    const parsedSecondTerm = parseFloat(secondTerm)
-    let tempResult
-
-    switch (oper) {
-      case '+':
-        tempResult = parsedFirstTerm + parsedSecondTerm
-        break
-      case '-':
-        tempResult = parsedFirstTerm - parsedSecondTerm
-        break
-      case 'x':
-        tempResult = parsedFirstTerm * parsedSecondTerm
-        break
-      case '/':
-        tempResult = parsedFirstTerm / parsedSecondTerm
-        break
-      default:
-        tempResult = undefined
-        break
-    }
-
-    return tempResult
-  }
-
-  function handleOperator(oper) {
-    const changeResultToTerm = {
-      terms: { 1: result, 2: undefined },
-      activeTerm: 2,
-      operator: oper,
-      result: undefined,
-    }
-
-    if (terms[1] === undefined) return
     if (result !== undefined) {
-      updateCalcul(changeResultToTerm)
-    } else if (terms[2] === undefined) {
-      updateCalcul({ ...calcul, activeTerm: 2, operator: oper })
-    } else {
-      updateCalcul({
-        ...changeResultToTerm,
-        terms: {
-          ...changeResultToTerm.terms,
-          1: calculResult(terms[1], operator, terms[2]),
-        },
-      })
+      newExpressionArr = []
+      newResult = undefined
+      newActiveTerm = 0
     }
-  }
 
-  function handleEqual() {
-    if (!operator) return
+    if (digit === '.') {
+      if (newExpressionArr[newActiveTerm] === undefined) {
+        newExpressionArr.push('0.')
+      } else if (!newExpressionArr[newActiveTerm].includes('.')) {
+        newExpressionArr[newActiveTerm] += '.'
+      }
+    }
+
+    if (typeof digit === 'number') {
+      if (newExpressionArr[newActiveTerm] === undefined) {
+        newExpressionArr.push(digit.toString())
+      } else if (newExpressionArr[newActiveTerm] === '0') {
+        newExpressionArr[newActiveTerm] = digit.toString()
+      } else {
+        newExpressionArr[newActiveTerm] += digit.toString()
+      }
+    }
 
     updateCalcul({
       ...calcul,
-      result: calculResult(terms[1], operator, terms[2]),
+      expressionArr: newExpressionArr,
+      activeTerm: newActiveTerm,
+      result: newResult,
     })
   }
 
-  console.log(calcul)
+  function handleOperator(oper) {
+    let newExpressionArr = [...expressionArr]
+    let newResult = result
+    let newActiveTerm = activeTerm
+
+    if (result !== undefined) {
+      newExpressionArr = [result]
+      newResult = undefined
+      newActiveTerm = 0
+    }
+
+    if (expressionArr.length % 2 === 0) return
+
+    newExpressionArr[newActiveTerm] = parseFloat(
+      newExpressionArr[newActiveTerm]
+    )
+    newExpressionArr.push(oper)
+
+    updateCalcul({
+      ...calcul,
+      activeTerm: newActiveTerm + 2,
+      expressionArr: newExpressionArr,
+      result: newResult,
+    })
+  }
+
+  function handleEqual() {
+    const newExpressionArr = [...expressionArr]
+    if (newExpressionArr[activeTerm] === undefined) {
+      newExpressionArr.pop()
+    }
+    const expression = newExpressionArr.join(' ').replaceAll('x', '*')
+    updateCalcul({ ...calcul, result: evaluate(expression) })
+  }
 
   return (
     <CalculContext.Provider
