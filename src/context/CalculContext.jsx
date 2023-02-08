@@ -34,8 +34,16 @@ export function CalculProvider({ children }) {
     if (expressionArr[0] === undefined) return
     let newExpressionArr = [...expressionArr]
     let newActiveTerm = activeTerm
+    let newResult = result
 
-    if (expressionArr.length <= 1 && expressionArr[0].toString().length <= 1) {
+    if (result !== undefined) {
+      newExpressionArr = []
+      newActiveTerm = 0
+      newResult = undefined
+    } else if (
+      expressionArr.length <= 1 &&
+      expressionArr[0].toString().length <= 1
+    ) {
       newExpressionArr = []
     } else if (!newExpressionArr[activeTerm]) {
       if (activeTerm >= 2) newActiveTerm -= 2
@@ -53,6 +61,7 @@ export function CalculProvider({ children }) {
       ...calcul,
       expressionArr: newExpressionArr,
       activeTerm: newActiveTerm,
+      result: newResult,
     })
   }
 
