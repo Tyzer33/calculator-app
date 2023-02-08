@@ -1,142 +1,110 @@
 import { createContext, useState } from 'react'
 import PropTypes from 'prop-types'
+import { evaluate } from 'mathjs'
 
 export const CalculContext = createContext()
 
 export function CalculProvider({ children }) {
   const [calcul, updateCalcul] = useState({
-    terms: [20, 30, 20],
+    terms: [],
     activeTerm: 0,
-    operator: ['+', '-'],
+    operator: [],
     result: undefined,
-    display: '',
   })
 
   const { terms, activeTerm, operator, result } = calcul
 
   function toDisplay() {
+    if (terms[0] === undefined) return undefined
     if (result !== undefined) {
       return result
     }
 
-    let sentence = ''
+    let display = ''
     terms.forEach((elem, index) => {
-      sentence += elem.toString()
+      display += elem.toString()
       if (operator[index]) {
-        sentence += ` ${operator[index]} `
+        display += ` ${operator[index]} `
       }
     })
-    return sentence
+    return display
   }
 
   function handleReset() {
     updateCalcul({
-      terms: { 1: undefined, 2: undefined },
-      activeTerm: 1,
-      operator: undefined,
+      terms: [],
+      activeTerm: 0,
+      operator: [],
       result: undefined,
     })
   }
 
   function handleDel() {
-    if (terms[activeTerm] === undefined) return
-
-    const newTerm =
-      terms[activeTerm].length > 1
-        ? terms[activeTerm].substring(0, terms[activeTerm].length - 1)
-        : undefined
-
-    updateCalcul({
-      ...calcul,
-      terms: {
-        ...terms,
-        [activeTerm]: newTerm,
-      },
-    })
+    // if (terms[activeTerm] === undefined) return
+    // const newTerm =
+    //   terms[activeTerm].length > 1
+    //     ? terms[activeTerm].substring(0, terms[activeTerm].length - 1)
+    //     : undefined
+    // updateCalcul({
+    //   ...calcul,
+    //   terms: {
+    //     ...terms,
+    //     [activeTerm]: newTerm,
+    //   },
+    // })
   }
 
   function handleDigitAndPoint(digit) {
-    if (digit === 0 && terms[activeTerm] === '0') return
+    const newTerms = [...terms]
 
-    const newTerm =
-      (terms[activeTerm] === '0' && digit !== '.') || !terms[activeTerm]
-        ? digit.toString()
-        : terms[activeTerm].toString() + digit.toString()
-    if (
-      typeof digit === 'number' ||
-      (digit === '.' && terms[activeTerm] === undefined) ||
-      !terms[activeTerm].includes('.')
-    ) {
-      updateCalcul({
-        ...calcul,
-        terms: {
-          ...terms,
-          [activeTerm]: newTerm,
-        },
-      })
-    }
-  }
-
-  function calculResult(firstTerm, oper, secondTerm = 0) {
-    const parsedFirstTerm = parseFloat(firstTerm)
-    const parsedSecondTerm = parseFloat(secondTerm)
-    let tempResult
-
-    switch (oper) {
-      case '+':
-        tempResult = parsedFirstTerm + parsedSecondTerm
-        break
-      case '-':
-        tempResult = parsedFirstTerm - parsedSecondTerm
-        break
-      case 'x':
-        tempResult = parsedFirstTerm * parsedSecondTerm
-        break
-      case '/':
-        tempResult = parsedFirstTerm / parsedSecondTerm
-        break
-      default:
-        tempResult = undefined
-        break
+    if (digit === '.') {
+      if (newTerms[activeTerm] === undefined) {
+        newTerms.push('0.')
+      } else if (!newTerms[activeTerm].includes('.')) {
+        newTerms[activeTerm] += '.'
+      }
     }
 
-    return tempResult
+    if (typeof digit === 'number') {
+      if (newTerms[activeTerm] === undefined) {
+        newTerms.push(digit.toString())
+      } else if (newTerms[activeTerm] === '0') {
+        newTerms[activeTerm] = digit.toString()
+      } else {
+        newTerms[activeTerm] += digit.toString()
+      }
+    }
+
+    updateCalcul({ ...calcul, terms: newTerms })
   }
 
   function handleOperator(oper) {
-    const changeResultToTerm = {
-      terms: { 1: result, 2: undefined },
-      activeTerm: 2,
-      operator: oper,
-      result: undefined,
-    }
+    if (operator.length >= terms.length) return
 
-    if (terms[1] === undefined) return
-    if (result !== undefined) {
-      updateCalcul(changeResultToTerm)
-    } else if (terms[2] === undefined) {
-      updateCalcul({ ...calcul, activeTerm: 2, operator: oper })
-    } else {
-      updateCalcul({
-        ...changeResultToTerm,
-        terms: {
-          ...changeResultToTerm.terms,
-          1: calculResult(terms[1], operator, terms[2]),
-        },
-      })
-    }
-  }
+    const newOperator = [...operator]
 
-  function handleEqual() {
-    if (!operator) return
+    newOperator.push(oper)
 
     updateCalcul({
       ...calcul,
-      result: calculResult(terms[1], operator, terms[2]),
+      activeTerm: activeTerm + 1,
+      operator: newOperator,
     })
   }
 
-  console.log(calcul)
+  function handleEqual() {
+    // Merge Terms and Operators
+    const mergedArray = []
+    terms.forEach((elem, index) => {
+      mergedArray.push(parseFloat(elem))
+      if (index !== terms.length - 1) {
+        mergedArray.push(operator[index])
+      }
+    })
+
+    const expression = mergedArray.join(' ').replace('x', '*')
+    updateCalcul({ ...calcul, result: evaluate(expression) })
+  }
 
   return (
     <CalculContext.Provider
