@@ -6,103 +6,125 @@ export const CalculContext = createContext()
 
 export function CalculProvider({ children }) {
   const [calcul, updateCalcul] = useState({
-    terms: [],
+    expressionArr: [],
     activeTerm: 0,
-    operator: [],
     result: undefined,
   })
 
-  const { terms, activeTerm, operator, result } = calcul
+  const { expressionArr, activeTerm, result } = calcul
 
   function toDisplay() {
-    if (terms[0] === undefined) return undefined
+    if (expressionArr.length === 0) return undefined
     if (result !== undefined) {
       return result
     }
 
-    let display = ''
-    terms.forEach((elem, index) => {
-      display += elem.toString()
-      if (operator[index]) {
-        display += ` ${operator[index]} `
-      }
-    })
-    return display
+    return expressionArr.join(' ')
   }
 
   function handleReset() {
     updateCalcul({
-      terms: [],
+      expressionArr: [],
       activeTerm: 0,
-      operator: [],
       result: undefined,
     })
   }
 
   function handleDel() {
-    // if (terms[activeTerm] === undefined) return
-    // const newTerm =
-    //   terms[activeTerm].length > 1
-    //     ? terms[activeTerm].substring(0, terms[activeTerm].length - 1)
-    //     : undefined
-    // updateCalcul({
-    //   ...calcul,
-    //   terms: {
-    //     ...terms,
-    //     [activeTerm]: newTerm,
-    //   },
-    // })
+    if (expressionArr[0] === undefined) return
+    let newExpressionArr = [...expressionArr]
+    let newActiveTerm = activeTerm
+
+    if (expressionArr.length <= 1 && expressionArr[0].toString().length <= 1) {
+      newExpressionArr = []
+    } else if (!newExpressionArr[activeTerm]) {
+      if (activeTerm >= 2) newActiveTerm -= 2
+      if (newExpressionArr[activeTerm] === '') newExpressionArr.pop()
+      newExpressionArr.pop()
+    } else {
+      newExpressionArr[activeTerm] = newExpressionArr[activeTerm].toString()
+      newExpressionArr[activeTerm] = newExpressionArr[activeTerm].slice(
+        0,
+        newExpressionArr[activeTerm].length - 1
+      )
+    }
+
+    updateCalcul({
+      ...calcul,
+      expressionArr: newExpressionArr,
+      activeTerm: newActiveTerm,
+    })
   }
 
   function handleDigitAndPoint(digit) {
-    const newTerms = [...terms]
+    let newExpressionArr = [...expressionArr]
+    let newResult = result
+    let newActiveTerm = activeTerm
+
+    if (result !== undefined) {
+      newExpressionArr = []
+      newResult = undefined
+      newActiveTerm = 0
+    }
 
     if (digit === '.') {
-      if (newTerms[activeTerm] === undefined) {
-        newTerms.push('0.')
-      } else if (!newTerms[activeTerm].includes('.')) {
-        newTerms[activeTerm] += '.'
+      if (newExpressionArr[newActiveTerm] === undefined) {
+        newExpressionArr.push('0.')
+      } else if (!newExpressionArr[newActiveTerm].includes('.')) {
+        newExpressionArr[newActiveTerm] += '.'
       }
     }
 
     if (typeof digit === 'number') {
-      if (newTerms[activeTerm] === undefined) {
-        newTerms.push(digit.toString())
-      } else if (newTerms[activeTerm] === '0') {
-        newTerms[activeTerm] = digit.toString()
+      if (newExpressionArr[newActiveTerm] === undefined) {
+        newExpressionArr.push(digit.toString())
+      } else if (newExpressionArr[newActiveTerm] === '0') {
+        newExpressionArr[newActiveTerm] = digit.toString()
       } else {
-        newTerms[activeTerm] += digit.toString()
+        newExpressionArr[newActiveTerm] += digit.toString()
       }
     }
 
-    updateCalcul({ ...calcul, terms: newTerms })
+    updateCalcul({
+      ...calcul,
+      expressionArr: newExpressionArr,
+      activeTerm: newActiveTerm,
+      result: newResult,
+    })
   }
 
   function handleOperator(oper) {
-    if (operator.length >= terms.length) return
+    let newExpressionArr = [...expressionArr]
+    let newResult = result
+    let newActiveTerm = activeTerm
 
-    const newOperator = [...operator]
+    if (result !== undefined) {
+      newExpressionArr = [result]
+      newResult = undefined
+      newActiveTerm = 0
+    }
 
-    newOperator.push(oper)
+    if (expressionArr.length % 2 === 0) return
+
+    newExpressionArr[newActiveTerm] = parseFloat(
+      newExpressionArr[newActiveTerm]
+    )
+    newExpressionArr.push(oper)
 
     updateCalcul({
       ...calcul,
-      activeTerm: activeTerm + 1,
-      operator: newOperator,
+      activeTerm: newActiveTerm + 2,
+      expressionArr: newExpressionArr,
+      result: newResult,
     })
   }
 
   function handleEqual() {
-    // Merge Terms and Operators
-    const mergedArray = []
-    terms.forEach((elem, index) => {
-      mergedArray.push(parseFloat(elem))
-      if (index !== terms.length - 1) {
-        mergedArray.push(operator[index])
-      }
-    })
-
-    const expression = mergedArray.join(' ').replace('x', '*')
+    const newExpressionArr = [...expressionArr]
+    if (newExpressionArr[activeTerm] === undefined) {
+      newExpressionArr.pop()
+    }
+    const expression = newExpressionArr.join(' ').replaceAll('x', '*')
     updateCalcul({ ...calcul, result: evaluate(expression) })
   }
 
